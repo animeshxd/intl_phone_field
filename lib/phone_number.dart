@@ -1,3 +1,4 @@
+
 import 'countries.dart';
 
 class NumberTooLongException implements Exception {}
@@ -7,19 +8,30 @@ class NumberTooShortException implements Exception {}
 class InvalidCharactersException implements Exception {}
 
 class PhoneNumber {
-  String countryISOCode;
-  String countryCode;
-  String number;
+
+  final Country country;
+  final String number;
 
   PhoneNumber({
-    required this.countryISOCode,
-    required this.countryCode,
+    required this.country,
     required this.number,
   });
 
   factory PhoneNumber.fromCompleteNumber({required String completeNumber}) {
+    var invalidPhoneNumber = PhoneNumber(
+      country: const Country(
+        name: '?',
+        flag: '?',
+        code: '?',
+        dialCode: '?',
+        nameTranslations: {},
+        minLength: 0,
+        maxLength: 0,
+      ),
+      number: "",
+    );
     if (completeNumber == "") {
-      return PhoneNumber(countryISOCode: "", countryCode: "", number: "");
+      return invalidPhoneNumber;
     }
 
     try {
@@ -30,19 +42,18 @@ class PhoneNumber {
       } else {
         number = completeNumber.substring(country.dialCode.length + country.regionCode.length);
       }
-      return PhoneNumber(
-          countryISOCode: country.code, countryCode: country.dialCode + country.regionCode, number: number);
+      return PhoneNumber(country: country, number: number);
     } on InvalidCharactersException {
       rethrow;
       // ignore: unused_catch_clause
     } on Exception catch (e) {
-      return PhoneNumber(countryISOCode: "", countryCode: "", number: "");
+      return invalidPhoneNumber;
     }
   }
 
   bool isValidNumber() {
     Country country = getCountry(completeNumber);
-    if (number.length < country.minLength) {
+    if (number.length < country.minLength || number.isEmpty) {
       throw NumberTooShortException();
     }
 
@@ -55,6 +66,8 @@ class PhoneNumber {
   String get completeNumber {
     return countryCode + number;
   }
+
+  String get countryCode => "+${country.dialCode}${country.regionCode}";
 
   static Country getCountry(String phoneNumber) {
     if (phoneNumber == "") {
@@ -75,5 +88,5 @@ class PhoneNumber {
   }
 
   @override
-  String toString() => 'PhoneNumber(countryISOCode: $countryISOCode, countryCode: $countryCode, number: $number)';
+  String toString() => 'PhoneNumber(countryISOCode: ${country.code}, countryCode: $countryCode, number: $number)';
 }
